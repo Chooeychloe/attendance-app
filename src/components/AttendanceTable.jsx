@@ -1,43 +1,4 @@
-function formatLogDate(dateValue) {
-  // Case 1: Already a YYYY-MM-DD string (Firestore style)
-  if (typeof dateValue === "string" && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
-    return dateValue;
-  }
-
-  // Case 2: Firestore Timestamp object
-  if (dateValue && typeof dateValue.toDate === "function") {
-    const d = dateValue.toDate();
-    return d.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  }
-
-  // Case 3: JS Date object
-  if (dateValue instanceof Date) {
-    return dateValue.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  }
-
-  // Case 4: ISO or other string format → try parsing
-  if (typeof dateValue === "string") {
-    const parsed = new Date(dateValue);
-    if (!isNaN(parsed)) {
-      return parsed.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      });
-    }
-  }
-
-  // Fallback → just display as-is
-  return String(dateValue || "-");
-}
+import { formatLogDate, getStatusColor } from "../utils/attendanceUtils";
 
 export default function AttendanceTable({ day, logs, holiday }) {
   return (
@@ -72,16 +33,17 @@ export default function AttendanceTable({ day, logs, holiday }) {
           </thead>
           <tbody>
             {logs.map((entry, idx) => (
-              <tr key={idx}>
+              <tr key={idx} className={getStatusColor(entry.status)}>
                 <td className="p-2 border">{entry.faculty}</td>
                 <td className="p-2 border">{formatLogDate(entry.date)}</td>
                 <td className="p-2 border">{entry.timeIn || "-"}</td>
                 <td className="p-2 border">{entry.timeOut || "-"}</td>
-                <td className="p-2 border">{entry.status || "-"}</td>
+                <td className="p-2 border font-semibold">{entry.status || "-"}</td>
               </tr>
             ))}
           </tbody>
         </table>
+        
       )}
     </div>
   );

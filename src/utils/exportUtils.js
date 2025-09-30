@@ -3,19 +3,33 @@ import { saveAs } from "file-saver";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-export function exportToExcel(logs, filename = "attendance.xlsx") {
-  const worksheet = XLSX.utils.json_to_sheet(logs);
+// exportToExcel remains unchanged (it's correct)
+export function exportToExcel(logs, filename = "attendance.xlsx", titlePrefix = "Attendance Report") {
+
+  const headerRow = [
+    { [titlePrefix]: titlePrefix }
+  ];
+
+  const logsWorksheet = XLSX.utils.json_to_sheet(logs, { origin: "A2" });
+
+  XLSX.utils.sheet_add_json(logsWorksheet, headerRow, {
+    skipHeader: true,
+    origin: "A1"
+  });
+
   const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Attendance");
+  XLSX.utils.book_append_sheet(workbook, logsWorksheet, "Attendance");
   const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
   const data = new Blob([excelBuffer], { type: "application/octet-stream" });
   saveAs(data, filename);
 }
 
 
-export function exportToPDF(logs, filename = "attendance.pdf") {
+export function exportToPDF(logs, filename = "attendance.pdf", titlePrefix = "Attendance Report") {
   const doc = new jsPDF();
-  doc.text("Attendance Report", 14, 15);
+
+  doc.setFontSize(14);
+  doc.text(`${titlePrefix}`, 14, 15);
 
   const groupedLogs = logs.reduce((acc, entry) => {
     if (!acc[entry.date]) {
@@ -27,8 +41,15 @@ export function exportToPDF(logs, filename = "attendance.pdf") {
 
   let currentY = 25;
 
-  Object.keys(groupedLogs).forEach((date) => {
+  const sortedDates = Object.keys(groupedLogs).sort((a, b) => new Date(a) - new Date(b));
+
+  sortedDates.forEach((date) => {
     const entries = groupedLogs[date];
+
+    if (currentY > 280) {
+      doc.addPage();
+      currentY = 15;
+    }
 
     doc.setFontSize(12);
     doc.text(date, 14, currentY);
@@ -44,7 +65,7 @@ export function exportToPDF(logs, filename = "attendance.pdf") {
         entry.status,
       ]),
       theme: "grid",
-      headStyles: { fillColor: [41, 128, 185] }, // Blue header
+      headStyles: { fillColor: [41, 128, 185] },
       styles: { fontSize: 10 },
       margin: { left: 14, right: 14 },
     });
@@ -54,22 +75,3 @@ export function exportToPDF(logs, filename = "attendance.pdf") {
 
   doc.save(filename);
 }
-
-
-// src/utils/firebaseConfig.js
-import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
-
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID",
-};
-
-const app = initializeApp(firebaseConfig);
-
-// ✅ Firestore instance
-export const db = getFirestore(app);
