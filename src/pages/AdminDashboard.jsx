@@ -1,20 +1,17 @@
+import { useState, useEffect } from "react";
 import { semesterConfig } from "../utils/semesterConfig";
-import { generateWeeks, formatDate, formatISO } from "../utils/dateUtils";
-import { getDayLogs } from "../utils/attendanceHelpers";
+import { generateWeeks, formatDate, toDateKey } from "../utils/dateUtils";
 import { WEEK_DAYS, ALL_DAYS_OPTION } from "../utils/constants";
 import WeekSelector from "../components/WeekSelector";
 import DaySelector from "../components/DaySelector";
 import AttendanceTable from "../components/AttendanceTable";
-import { useState } from "react";
-import { attendanceLogs } from "../data/attendanceLogs";
 import Navbar from "../components/Navbar";
-import { exportToExcel, exportToPDF } from "../utils/exportUtils"; // ✅ import
+import { collection, getDocs, query } from "firebase/firestore";
+import { db } from "../utils/firebaseConfig";
 
 export default function AdminDashboard() {
   const savedUser = JSON.parse(localStorage.getItem("user"));
   const user = savedUser;
-
-  const allFaculty = Object.keys(attendanceLogs);
 
   const weeks = generateWeeks(
     semesterConfig.firstSemester.start,
@@ -23,59 +20,41 @@ export default function AdminDashboard() {
 
   const [selectedWeek, setSelectedWeek] = useState(weeks[0].week);
   const [selectedDay, setSelectedDay] = useState(ALL_DAYS_OPTION);
+  const [logs, setLogs] = useState([]);
 
   const week = weeks.find((w) => w.week === selectedWeek);
 
-  if (!week) {
-    return <div className="p-8">Loading or Week not found...</div>;
-  }
+  useEffect(() => {
+    const fetchLogs = async () => {
+      try {
+        const q = query(collection(db, "attendanceLogs"));
+        const querySnapshot = await getDocs(q);
 
+        const logsData = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        setLogs(logsData);
+      } catch (err) {
+        console.error("Error fetching logs:", err);
+      }
+    };
+
+    fetchLogs();
+  }, []);
+
+  if (!week) return <div className="p-8">Loading...</div>;
+
+  // render all weekdays or one selected
   const daysToRender = selectedDay === ALL_DAYS_OPTION ? [...Array(6)] : [0];
-
-  let exportLogs = [];
-
-  daysToRender.forEach((_, i) => {
-    let offset = i;
-    if (selectedDay !== ALL_DAYS_OPTION) {
-      const selectedDayIndex = WEEK_DAYS.indexOf(selectedDay);
-      offset = selectedDayIndex;
-      if (selectedDayIndex === -1) return null;
-    }
-
-    const day = new Date(week.start);
-    day.setDate(day.getDate() + offset);
-    const isoDate = formatISO(day);
-
-    const currentWeekday = new Intl.DateTimeFormat("en-US", {
-      weekday: "long",
-    }).format(day);
-
-    const { logs } = getDayLogs(allFaculty, isoDate, currentWeekday);
-
-    if (logs.length > 0) {
-      exportLogs.push(
-        ...logs.map((entry) => ({
-          faculty: entry.faculty,
-          date: formatDate(day, {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-          }),
-          timeIn: entry.log?.timeIn || "-",
-          timeOut: entry.log?.timeOut || "-",
-          status: entry.status,
-        }))
-      );
-    }
-  });
 
   return (
     <div>
       <Navbar user={user} />
+
       <div className="p-8">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-        </div>
+        <h1 className="text-2xl font-bold">Admin Dashboard</h1>
 
         <div className="mt-6 mb-6 flex space-x-4">
           <WeekSelector
@@ -84,21 +63,6 @@ export default function AdminDashboard() {
             onChange={setSelectedWeek}
           />
           <DaySelector selectedDay={selectedDay} onChange={setSelectedDay} />
-        </div>
-
-        <div className="flex space-x-4 mb-4">
-          <button
-            onClick={() => exportToExcel(exportLogs, "attendance.xlsx")}
-            className="bg-red-700 text-white px-3 py-1 rounded hover:bg-green-700"
-          >
-            Export Excel
-          </button>
-          <button
-            onClick={() => exportToPDF(exportLogs, "attendance.pdf")}
-            className="bg-red-700 text-white px-3 py-1 rounded hover:bg-green-700"
-          >
-            Export PDF
-          </button>
         </div>
 
         <div className="mt-12">
@@ -119,24 +83,19 @@ export default function AdminDashboard() {
 
             const day = new Date(week.start);
             day.setDate(day.getDate() + offset);
-            const isoDate = formatISO(day);
 
-            const currentWeekday = new Intl.DateTimeFormat("en-US", {
-              weekday: "long",
-            }).format(day);
+            // ✅ local YYYY-MM-DD
+            const dateKey = toDateKey(day);
 
-            const { logs, holiday } = getDayLogs(
-              allFaculty,
-              isoDate,
-              currentWeekday
-            );
+            // ✅ match logs for this date
+            const dayLogs = logs.filter((log) => log.date === dateKey);
 
             return (
               <AttendanceTable
-                key={isoDate}
+                key={dateKey}
                 day={day}
-                logs={logs}
-                holiday={holiday}
+                logs={dayLogs}
+                holiday={null}
               />
             );
           })}

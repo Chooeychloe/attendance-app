@@ -1,18 +1,18 @@
+import { useState, useEffect } from "react";
 import { semesterConfig } from "../utils/semesterConfig";
-import { generateWeeks, formatDate, formatISO } from "../utils/dateUtils";
-import { getStatus } from "../utils/checkAttendance";
-import { schedules } from "../data/schedules";
-import { attendanceLogs } from "../data/attendanceLogs";
+import { generateWeeks, formatDate, toDateKey } from "../utils/dateUtils";
 import { WEEK_DAYS, ALL_DAYS_OPTION } from "../utils/constants";
 import WeekSelector from "../components/WeekSelector";
 import DaySelector from "../components/DaySelector";
 import AttendanceTable from "../components/AttendanceTable";
-import { useState } from "react";
 import Navbar from "../components/Navbar";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { db } from "../utils/firebaseConfig";
 
 export default function FacultyDashboard() {
   const savedUser = JSON.parse(localStorage.getItem("user"));
-  const user = savedUser; // instead of useLocation()
+  const user = savedUser;
+
   const weeks = generateWeeks(
     semesterConfig.firstSemester.start,
     semesterConfig.firstSemester.end
@@ -20,13 +20,36 @@ export default function FacultyDashboard() {
 
   const [selectedWeek, setSelectedWeek] = useState(weeks[0].week);
   const [selectedDay, setSelectedDay] = useState(ALL_DAYS_OPTION);
+  const [logs, setLogs] = useState([]);
 
   const week = weeks.find((w) => w.week === selectedWeek);
 
-  if (!week) {
-    return <div className="p-8">Loading or Week not found...</div>;
-  }
+  useEffect(() => {
+    const fetchLogs = async () => {
+      try {
+        const q = query(
+          collection(db, "attendanceLogs"),
+          where("faculty", "==", user.username)
+        );
+        const querySnapshot = await getDocs(q);
 
+        const logsData = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        setLogs(logsData);
+      } catch (err) {
+        console.error("Error fetching faculty logs:", err);
+      }
+    };
+
+    fetchLogs();
+  }, [user]);
+
+  if (!week) return <div className="p-8">Loading...</div>;
+
+  // render all weekdays or one selected
   const daysToRender = selectedDay === ALL_DAYS_OPTION ? [...Array(6)] : [0];
 
   return (
@@ -34,14 +57,7 @@ export default function FacultyDashboard() {
       <Navbar user={user} />
 
       <div className="p-8">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-           
-            <div>
-              <h1 className="text-2xl font-bold">Faculty Dashboard</h1>
-            </div>
-          </div>
-        </div>
+        <h1 className="text-2xl font-bold">Faculty Dashboard</h1>
 
         <div className="mt-6 mb-6 flex space-x-4">
           <WeekSelector
@@ -70,42 +86,18 @@ export default function FacultyDashboard() {
 
             const day = new Date(week.start);
             day.setDate(day.getDate() + offset);
-            const isoDate = formatISO(day);
 
-            const currentWeekday = new Intl.DateTimeFormat("en-US", {
-              weekday: "long",
-            }).format(day);
+            // ✅ local-safe key
+            const dateKey = toDateKey(day);
 
-            const schedule = schedules[user.username]?.find(
-              (s) => s.day === currentWeekday
-            );
-            const log = attendanceLogs[user.username]?.find(
-              (l) => l.date === isoDate
-            );
-
-            let status;
-            if (log) {
-              status = getStatus(schedule, log);
-            } else if (schedule) {
-              status = "Absent";
-            } else {
-              status = "No Class";
-            }
-
-            const logs = [
-              {
-                faculty: user.username,
-                log,
-                date: isoDate,
-                status,
-              },
-            ];
+            // ✅ filter logs with string equality
+            const dayLogs = logs.filter((log) => log.date === dateKey);
 
             return (
               <AttendanceTable
-                key={isoDate}
+                key={dateKey}
                 day={day}
-                logs={logs}
+                logs={dayLogs}
                 holiday={null}
               />
             );

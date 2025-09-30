@@ -89,6 +89,15 @@ export const getWeeks = () => {
     }
     return weeks;
 };
+// Use local year/month/day so no timezone shift happens
+export function toDateKey(date) {
+  const d = date instanceof Date ? date : new Date(date);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`; // e.g. "2025-09-30"
+}
+
 
 export const daysOfWeek = [
     { label: "Monday", value: 1 },

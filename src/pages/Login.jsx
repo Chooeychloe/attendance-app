@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { users } from "../data/users";
+import { users } from "../data/users"; // make sure each faculty has facultyId in this file
 
 export default function Login() {
   const [username, setUsername] = useState("");
@@ -13,12 +13,21 @@ export default function Login() {
     );
 
     if (user) {
-      localStorage.setItem("user", JSON.stringify(user));
+      // Save only necessary fields in localStorage
+      const userData = {
+        username: user.username,
+        role: user.role,
+        facultyId: user.facultyId || null, // admin won't have this
+      };
+
+      localStorage.setItem("user", JSON.stringify(userData));
 
       if (user.role === "admin") {
         navigate("/admin");
-      } else {
+      } else if (user.role === "faculty") {
         navigate("/faculty");
+      } else {
+        navigate("/"); // fallback route
       }
     } else {
       alert("Invalid credentials");
@@ -29,6 +38,7 @@ export default function Login() {
     <div className="flex justify-center items-center h-screen bg-gray-100">
       <div className="bg-white p-8 rounded-lg shadow-md w-96">
         <h1 className="text-2xl font-bold mb-6 text-center">Login</h1>
+
         <input
           type="text"
           placeholder="Username"
@@ -36,6 +46,7 @@ export default function Login() {
           value={username}
           onChange={(e) => setUsername(e.target.value)}
         />
+
         <input
           type="password"
           placeholder="Password"
@@ -43,6 +54,7 @@ export default function Login() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
+
         <button
           onClick={handleLogin}
           className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700"
