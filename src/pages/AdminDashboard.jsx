@@ -22,7 +22,7 @@ export default function AdminDashboard() {
 
   const [selectedWeek, setSelectedWeek] = useState(weeks[0].week);
   const [selectedDay, setSelectedDay] = useState(ALL_DAYS_OPTION);
-  const [logs, setLogs] = useState([]); // All logs fetched from Firestore
+  const [logs, setLogs] = useState([]); 
 
   const week = weeks.find((w) => w.week === selectedWeek);
 
@@ -47,11 +47,7 @@ export default function AdminDashboard() {
 
   if (!week) return <div className="p-8">Loading...</div>;
 
-  // ----------------------------------------------------
-  // ✅ NEW LOGIC: Calculate logs for the current view/export
-  // ----------------------------------------------------
 
-  // 1. Determine the date keys for the selected week (Mon to Sat)
   const weekDayDateKeys = [];
   const daysInWeek = 6;
   for (let i = 0; i < daysInWeek; i++) {
@@ -60,10 +56,8 @@ export default function AdminDashboard() {
     weekDayDateKeys.push(toDateKey(day));
   }
 
-  // 2. Filter ALL logs to only those in the current selected week
   let logsToExport = logs.filter((log) => weekDayDateKeys.includes(log.date));
 
-  // 3. Further filter by selected day if it's not ALL_DAYS_OPTION
   if (selectedDay !== ALL_DAYS_OPTION) {
     const selectedDayIndex = WEEK_DAYS.indexOf(selectedDay);
     if (selectedDayIndex !== -1) {
@@ -71,17 +65,11 @@ export default function AdminDashboard() {
       selectedDate.setDate(selectedDate.getDate() + selectedDayIndex);
       const selectedDateKey = toDateKey(selectedDate);
 
-      // Filter logs to only include the specific selected day
       logsToExport = logsToExport.filter((log) => log.date === selectedDateKey);
     } else {
-      // Should not happen if DaySelector is used correctly
       logsToExport = [];
     }
   }
-
-  // ----------------------------------------------------
-  // Logic for rendering the tables (uses the same filtering principles)
-  // ----------------------------------------------------
 
   const daysToRender = [];
   if (selectedDay === ALL_DAYS_OPTION) {
@@ -124,18 +112,14 @@ export default function AdminDashboard() {
             , {formatDate(week.start, { year: "numeric" })}
           </h2>
 
-          {/* ✅ FIX: Pass the CALCULATED 'logsToExport' array */}
           <ExportButtons
             logs={logsToExport}
-            // ✅ PASS THE SELECTION DETAILS HERE
             week={week}
             selectedDay={selectedDay}
           />
-          {/* Map through the final daysToRender array */}
           {daysToRender.map((day) => {
             const dateKey = toDateKey(day);
 
-            // Filter the logsToExport array again for the specific day to display in the table
             const dayLogs = logsToExport.filter((log) => log.date === dateKey);
 
             return (

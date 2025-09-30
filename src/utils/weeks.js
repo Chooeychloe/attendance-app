@@ -7,7 +7,7 @@ function generateWeeks(startDate, endDate) {
   while (current <= endDate) {
     const weekStart = new Date(current);
     const weekEnd = new Date(current);
-    weekEnd.setDate(weekEnd.getDate() + 5); // Monday → Saturday
+    weekEnd.setDate(weekEnd.getDate() + 5);
 
     weeks.push({
       id: weekIndex,

@@ -7,13 +7,10 @@ export default function LogoutButton() {
 
   const handleLogout = async () => {
     try {
-      // Firebase sign out
       await signOut(auth);
 
-      // Clear role data
       localStorage.removeItem("user");
 
-      // Redirect to login
       navigate("/login");
     } catch (error) {
       console.error("Logout failed:", error);

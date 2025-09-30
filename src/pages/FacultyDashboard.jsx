@@ -49,7 +49,6 @@ export default function FacultyDashboard() {
 
   if (!week) return <div className="p-8">Loading...</div>;
 
-  // render all weekdays or one selected
   const daysToRender = selectedDay === ALL_DAYS_OPTION ? [...Array(6)] : [0];
 
   return (
@@ -87,10 +86,8 @@ export default function FacultyDashboard() {
             const day = new Date(week.start);
             day.setDate(day.getDate() + offset);
 
-            // ✅ local-safe key
             const dateKey = toDateKey(day);
 
-            // ✅ filter logs with string equality
             const dayLogs = logs.filter((log) => log.date === dateKey);
 
             return (

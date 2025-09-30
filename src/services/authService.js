@@ -2,7 +2,6 @@ import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "../utils/firebaseConfig";
 
 export async function loginUser(username, password) {
-  // Revert to the original query that uses BOTH username and password
   const usersRef = collection(db, "users");
   const q = query(
     usersRef,

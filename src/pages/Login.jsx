@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { loginUser } from "../services/authService"; // ✅ use helper
+import { loginUser } from "../services/authService"; 
 
 export default function Login() {
   const [username, setUsername] = useState("");
@@ -8,24 +8,19 @@ export default function Login() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  // In Login.jsx
 
   const handleLogin = async () => {
     try {
-      // 💡 FIX: Trim whitespace from inputs before calling the service
       const trimmedUsername = username.trim();
       const trimmedPassword = password.trim();
 
-      // Check if fields are empty after trimming
       if (!trimmedUsername || !trimmedPassword) {
         setError("Please enter both username and password.");
-        return; // Stop execution if fields are empty
+        return; 
       }
 
-      // Use the trimmed values for login
       const user = await loginUser(trimmedUsername, trimmedPassword);
 
-      // ... (rest of your navigation logic)
       if (user.role === "admin") {
         navigate("/admin");
       } else if (user.role === "faculty") {

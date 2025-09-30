@@ -5,7 +5,6 @@ export function generateWeeks(startDate, endDate) {
     const end = new Date(endDate);
     let current = new Date(startDate);
 
-    // Reset to start of day
     current.setHours(0, 0, 0, 0);
     end.setHours(0, 0, 0, 0);
 
@@ -15,10 +14,8 @@ export function generateWeeks(startDate, endDate) {
         const weekStart = new Date(current);
         const weekEnd = new Date(current);
 
-        // Move to Saturday (5 days from Monday)
         weekEnd.setDate(weekEnd.getDate() + 5);
 
-        // If weekEnd exceeds semester end, cap it
         const actualEnd = weekEnd > end ? new Date(end) : weekEnd;
 
         weeks.push({
@@ -27,7 +24,6 @@ export function generateWeeks(startDate, endDate) {
             end: actualEnd,
         });
 
-        // Move to next Monday
         current.setDate(current.getDate() + 7);
         weekIndex++;
     }
@@ -49,7 +45,6 @@ export function formatDate(date, options = { month: "short", day: "numeric" }) {
     return new Intl.DateTimeFormat("en-US", options).format(date);
 }
 
-// Additional utility for consistent display
 export function formatDisplayDate(date) {
     return formatDate(date, {
         weekday: 'long',
@@ -89,13 +84,12 @@ export const getWeeks = () => {
     }
     return weeks;
 };
-// Use local year/month/day so no timezone shift happens
 export function toDateKey(date) {
   const d = date instanceof Date ? date : new Date(date);
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`; // e.g. "2025-09-30"
+  return `${y}-${m}-${day}`; 
 }
 
 

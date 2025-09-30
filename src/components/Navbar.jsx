@@ -8,8 +8,8 @@ export default function Navbar({ user }) {
 
   const handleLogout = async () => {
     try {
-      await signOut(auth); // ✅ Firebase logout
-      localStorage.removeItem("user"); // ✅ Clear role data
+      await signOut(auth); 
+      localStorage.removeItem("user");
       navigate("/login");
     } catch (err) {
       console.error("Error during logout:", err);

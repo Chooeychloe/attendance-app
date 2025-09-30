@@ -3,7 +3,6 @@ import { saveAs } from "file-saver";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-// exportToExcel remains unchanged (it's correct)
 export function exportToExcel(logs, filename = "attendance.xlsx", titlePrefix = "Attendance Report") {
 
   const headerRow = [

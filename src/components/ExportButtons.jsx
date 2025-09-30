@@ -30,7 +30,6 @@ export default function ExportButtons({ logs, week, selectedDay }) {
   };
   
   const handleExportExcel = () => {
-    // ⚠️ FIX: You must call the function here to define 'prefix'
     const prefix = getFilenamePrefix(); 
     const filename = `${prefix}.xlsx`;
     exportToExcel(logs, filename, prefix); 
@@ -42,7 +41,6 @@ export default function ExportButtons({ logs, week, selectedDay }) {
     exportToPDF(logs, filename, prefix);
   };
   
-  // Don't render buttons if critical data (like 'week') is missing
   if (!week) {
     return null;
   }
